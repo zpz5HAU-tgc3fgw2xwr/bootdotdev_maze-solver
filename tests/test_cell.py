@@ -1,13 +1,20 @@
 import unittest
-from maze_solver.cell import Cell
+from mazesolver.entities.cell import Cell
 
 class TestCell(unittest.TestCase):
-    def test_initialization(self):
-        cell = Cell(0, 0, 20, 20)
-        self.assertTrue(cell.has_left_wall)
-        self.assertTrue(cell.has_top_wall)
-        self.assertFalse(cell.visited)
+	def test_initialization(self):
+		"""Test that the cell initializes correctly with all walls."""
+		cell = Cell(0, 0, 20, 20)
+		self.assertTrue(cell.has_left_wall)
+		self.assertTrue(cell.has_top_wall)
+		self.assertTrue(cell.has_right_wall)
+		self.assertTrue(cell.has_bottom_wall)
+		self.assertFalse(cell.visited)
 
-    def test_draw_move(self):
-        # Mocked window for testing draw behavior
-        pass  # Add as needed, based on test requirements
+	def test_draw_move(self):
+		"""Test the draw_move function."""
+		# Mocking behavior would be added here if needed
+		pass
+
+if __name__ == "__main__":
+	unittest.main()

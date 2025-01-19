@@ -1,7 +1,7 @@
 import argparse
 import random
-from window import Window
-from maze import Maze
+from mazesolver.window import Window
+from mazesolver.entities.maze import Maze
 
 def main():
 	# Parse command-line arguments
