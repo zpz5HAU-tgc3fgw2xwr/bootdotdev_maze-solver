@@ -3,22 +3,20 @@ import time
 from mazesolver.entities.cell import Cell
 
 class Maze:
-	SIDEBAR_WIDTH = 214  # Match the width of the sidebar
+	SIDEBAR_WIDTH = 200  # Match the width of the sidebar
 
 	def __init__(self, x1, y1, num_rows, num_cols, win=None, seed=None):
-		"""Initialize the maze with dynamic cell size and optional seed."""
+		if seed is not None:
+			random.seed(seed)
 		self._x1 = x1
 		self._y1 = y1
 		self._num_rows = num_rows
 		self._num_cols = num_cols
 		self._win = win
 		self._cells = []
-		self._cell_size = None  # Placeholder for dynamically calculated cell size
+		self._animation_delay = 0.1  # Default to 10 actions per second (0.1 seconds per action)
 
-		if seed is not None:
-			random.seed(seed)
-
-		# Calculate and set the cell size
+		# Calculate dynamic cell size and create cells
 		self._calculate_cell_size()
 		self._create_cells()
 
@@ -29,7 +27,9 @@ class Maze:
 			canvas_height = self._win.current_height
 
 			# Determine cell size based on the smaller dimension
-			self._cell_size = min(canvas_width // self._num_cols, canvas_height // self._num_rows)
+			self._cell_size_x = canvas_width // self._num_cols
+			self._cell_size_y = canvas_height // self._num_rows
+			self._cell_size = min(self._cell_size_x, self._cell_size_y)
 
 			# Adjust starting x and y to center the maze
 			self._x1 = (canvas_width - (self._num_cols * self._cell_size)) // 2
@@ -123,17 +123,21 @@ class Maze:
 				   (drow == -1 and not self._cells[col][row].has_top_wall) or \
 				   (drow == 1 and not self._cells[col][row].has_bottom_wall):
 					self._cells[col][row].draw_move(self._cells[ncol][nrow])
+					self._animate()  # Add animation delay
 					if self._solve_r(ncol, nrow):
 						return True
 					self._cells[col][row].draw_move(self._cells[ncol][nrow], undo=True)
+					self._animate()  # Add animation delay for undo action
 
 		return False
-	
+
 	def set_animation_speed(self, speed):
-		"""Set the animation speed for solving the maze."""
-		self._animation_speed = speed
+		"""Set the animation speed for solving the maze in actions per second."""
+		if speed > 0:
+			self._animation_delay = 1 / speed  # Set the delay for 1/speed seconds per action
 
 	def _animate(self):
+		"""Add delay between actions based on animation speed."""
 		if self._win:
 			self._win.redraw()
-		time.sleep(self._animation_speed)
+		time.sleep(self._animation_delay)
