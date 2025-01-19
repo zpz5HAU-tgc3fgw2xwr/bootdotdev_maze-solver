@@ -18,21 +18,22 @@ def main():
 	seed = args.seed if args.seed is not None else random.randint(0, 100000)
 
 	# Callback to generate a new maze from the UI
-	def generate_maze_callback(new_x, new_y, speed, new_seed):
+	def generate_maze_callback(new_x, new_y, new_speed, new_seed):
 		nonlocal x, y, seed, current_maze
-		x = new_x
-		y = new_y
-		seed = int(new_seed) if new_seed else random.randint(0, 100000)
+		x, y, seed = new_x, new_y, int(new_seed) if new_seed else random.randint(0, 100000)
 
-		# Calculate cell size and window dimensions
 		cell_size, window_width, window_height = calculate_dimensions(x, y)
-		win.set_window_size(window_width, window_height)  # Dynamically update window size
+		win.set_window_size(window_width, window_height)
 		win.clear_canvas()
 
 		current_maze = Maze(50, 50, y, x, win=win, seed=seed)
-		current_maze.set_animation_speed(speed)
+		current_maze.set_animation_speed(new_speed)
 		current_maze.solve()
 
+	def update_solver_speed(speed):
+		"""Update the solver speed dynamically."""
+		if current_maze:
+			current_maze.set_animation_speed(speed)
 
 	# Calculate initial cell size and window dimensions
 	def calculate_dimensions(num_cols, num_rows):
@@ -55,6 +56,7 @@ def main():
 	cell_size, initial_window_width, initial_window_height = calculate_dimensions(x, y)
 	win = Window(initial_window_width, initial_window_height, initial_seed=seed)
 	win.set_generate_callback(generate_maze_callback)
+	win.set_solver_speed_callback(update_solver_speed)
 
 	# Create the initial maze
 	current_maze = Maze(50, 50, y, x, win=win, seed=seed)

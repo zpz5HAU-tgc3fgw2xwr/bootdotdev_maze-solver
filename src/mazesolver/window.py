@@ -52,6 +52,14 @@ class Window:
 		if self.generate_callback:
 			self.generate_callback(x, y, speed, seed)
 
+	def set_solver_speed_callback(self, callback):
+		"""Set the callback for solver speed changes."""
+		self.solver_speed_callback = callback
+
+	def update_solver_speed(self, speed):
+		"""Update the solver speed dynamically."""
+		if self.solver_speed_callback:
+			self.solver_speed_callback(speed)
 	def set_generate_callback(self, callback):
 		"""Set the callback for maze generation."""
 		self.generate_callback = callback
