@@ -3,28 +3,47 @@ import time
 from mazesolver.entities.cell import Cell
 
 class Maze:
-	def __init__(self, x1, y1, num_rows, num_cols, cell_size_x, cell_size_y, win=None, seed=None):
-		if seed is not None:
-			random.seed(seed)
+	SIDEBAR_WIDTH = 214  # Match the width of the sidebar
+
+	def __init__(self, x1, y1, num_rows, num_cols, win=None, seed=None):
+		"""Initialize the maze with dynamic cell size and optional seed."""
 		self._x1 = x1
 		self._y1 = y1
 		self._num_rows = num_rows
 		self._num_cols = num_cols
-		self._cell_size_x = cell_size_x
-		self._cell_size_y = cell_size_y
 		self._win = win
 		self._cells = []
+		self._cell_size = None  # Placeholder for dynamically calculated cell size
+
+		if seed is not None:
+			random.seed(seed)
+
+		# Calculate and set the cell size
+		self._calculate_cell_size()
 		self._create_cells()
+
+	def _calculate_cell_size(self):
+		"""Calculate cell size dynamically based on window dimensions."""
+		if self._win:
+			canvas_width = self._win.current_width - self.SIDEBAR_WIDTH
+			canvas_height = self._win.current_height
+
+			# Determine cell size based on the smaller dimension
+			self._cell_size = min(canvas_width // self._num_cols, canvas_height // self._num_rows)
+
+			# Adjust starting x and y to center the maze
+			self._x1 = (canvas_width - (self._num_cols * self._cell_size)) // 2
+			self._y1 = (canvas_height - (self._num_rows * self._cell_size)) // 2
 
 	def _create_cells(self):
 		"""Initialize the grid of cells and break walls."""
 		for col in range(self._num_cols):
 			column = []
 			for row in range(self._num_rows):
-				x1 = self._x1 + col * self._cell_size_x
-				y1 = self._y1 + row * self._cell_size_y
-				x2 = x1 + self._cell_size_x
-				y2 = y1 + self._cell_size_y
+				x1 = self._x1 + col * self._cell_size
+				y1 = self._y1 + row * self._cell_size
+				x2 = x1 + self._cell_size
+				y2 = y1 + self._cell_size
 				column.append(Cell(x1, y1, x2, y2, self._win))
 			self._cells.append(column)
 
