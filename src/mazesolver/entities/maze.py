@@ -3,7 +3,8 @@ import time
 from mazesolver.entities.cell import Cell
 
 class Maze:
-	SIDEBAR_WIDTH = 200  # Match the width of the sidebar
+	SIDEBAR_WIDTH = 210  # Match the width of the sidebar
+	PADDING = 30         # Padding around the maze
 
 	def __init__(self, x1, y1, num_rows, num_cols, win=None, seed=None):
 		if seed is not None:
@@ -23,17 +24,20 @@ class Maze:
 	def _calculate_cell_size(self):
 		"""Calculate cell size dynamically based on window dimensions."""
 		if self._win:
-			canvas_width = self._win.current_width - self.SIDEBAR_WIDTH
-			canvas_height = self._win.current_height
+			canvas_width = self._win.current_width - self.SIDEBAR_WIDTH - self.PADDING
+			canvas_height = self._win.current_height - self.PADDING
 
 			# Determine cell size based on the smaller dimension
 			self._cell_size_x = canvas_width // self._num_cols
 			self._cell_size_y = canvas_height // self._num_rows
 			self._cell_size = min(self._cell_size_x, self._cell_size_y)
 
-			# Adjust starting x and y to center the maze
-			self._x1 = (canvas_width - (self._num_cols * self._cell_size)) // 2
-			self._y1 = (canvas_height - (self._num_rows * self._cell_size)) // 2
+			# Adjust starting x and y to center the maze with padding
+			maze_width = self._cell_size * self._num_cols
+			maze_height = self._cell_size * self._num_rows
+
+			self._x1 = (canvas_width - maze_width) // 2 + self.PADDING // 2
+			self._y1 = (canvas_height - maze_height) // 2 + self.PADDING // 2
 
 	def _create_cells(self):
 		"""Initialize the grid of cells and break walls."""
@@ -48,9 +52,10 @@ class Maze:
 			self._cells.append(column)
 
 		self._break_entrance_and_exit()
-		self._break_walls_r(0, 0)
+		self._break_walls()
 		self._reset_cells_visited()
 		self._redraw_maze()
+
 
 	def _redraw_maze(self):
 		"""Redraw all cells after walls are broken."""
@@ -58,11 +63,15 @@ class Maze:
 			for cell in col:
 				cell.draw()
 
-	def _break_walls_r(self, col, row):
-		"""Recursively break walls to create a solvable maze."""
-		self._cells[col][row].visited = True
-		while True:
+	def _break_walls(self):
+		"""Iteratively break walls to create a solvable maze."""
+		stack = [(0, 0)]
+		self._cells[0][0].visited = True
+
+		while stack:
+			col, row = stack[-1]
 			directions = []
+
 			if col > 0 and not self._cells[col - 1][row].visited:
 				directions.append((-1, 0))
 			if col < self._num_cols - 1 and not self._cells[col + 1][row].visited:
@@ -72,26 +81,28 @@ class Maze:
 			if row < self._num_rows - 1 and not self._cells[col][row + 1].visited:
 				directions.append((0, 1))
 
-			if not directions:
-				return
+			if directions:
+				dcol, drow = random.choice(directions)
+				ncol, nrow = col + dcol, row + drow
 
-			dcol, drow = random.choice(directions)
-			ncol, nrow = col + dcol, row + drow
+				if dcol == -1:
+					self._cells[col][row].has_left_wall = False
+					self._cells[ncol][nrow].has_right_wall = False
+				elif dcol == 1:
+					self._cells[col][row].has_right_wall = False
+					self._cells[ncol][nrow].has_left_wall = False
+				elif drow == -1:
+					self._cells[col][row].has_top_wall = False
+					self._cells[ncol][nrow].has_bottom_wall = False
+				elif drow == 1:
+					self._cells[col][row].has_bottom_wall = False
+					self._cells[ncol][nrow].has_top_wall = False
 
-			if dcol == -1:
-				self._cells[col][row].has_left_wall = False
-				self._cells[ncol][nrow].has_right_wall = False
-			elif dcol == 1:
-				self._cells[col][row].has_right_wall = False
-				self._cells[ncol][nrow].has_left_wall = False
-			elif drow == -1:
-				self._cells[col][row].has_top_wall = False
-				self._cells[ncol][nrow].has_bottom_wall = False
-			elif drow == 1:
-				self._cells[col][row].has_bottom_wall = False
-				self._cells[ncol][nrow].has_top_wall = False
+				self._cells[ncol][nrow].visited = True
+				stack.append((ncol, nrow))
+			else:
+				stack.pop()
 
-			self._break_walls_r(ncol, nrow)
 
 	def _break_entrance_and_exit(self):
 		"""Break entrance and exit walls."""
@@ -119,9 +130,9 @@ class Maze:
 			ncol, nrow = col + dcol, row + drow
 			if 0 <= ncol < self._num_cols and 0 <= nrow < self._num_rows and not self._cells[ncol][nrow].visited:
 				if (dcol == -1 and not self._cells[col][row].has_left_wall) or \
-				   (dcol == 1 and not self._cells[col][row].has_right_wall) or \
-				   (drow == -1 and not self._cells[col][row].has_top_wall) or \
-				   (drow == 1 and not self._cells[col][row].has_bottom_wall):
+					(dcol == 1 and not self._cells[col][row].has_right_wall) or \
+					(drow == -1 and not self._cells[col][row].has_top_wall) or \
+					(drow == 1 and not self._cells[col][row].has_bottom_wall):
 					self._cells[col][row].draw_move(self._cells[ncol][nrow])
 					self._animate()  # Add animation delay
 					if self._solve_r(ncol, nrow):
